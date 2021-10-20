@@ -30,7 +30,7 @@ contract CachCheques {
     }
     
     
-    function batch_cashcheques(
+    function batchCashcheques(
         address recipient, 
         address[] memory beneficiarys, 
         address[] memory chequebooks, 
