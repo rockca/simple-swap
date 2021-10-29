@@ -6,6 +6,7 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4
 interface Token {
     //ERC20 transfer()
     function transfer(address _to, uint256 _value) external returns (bool);
+    function balance()
 }
 
 contract ContributionReward {
@@ -19,7 +20,7 @@ contract ContributionReward {
         uint canWithdrawAt; /* point in time after which rewards can be withdrawn*/
     }
     //token address, the token Rewarded
-    address public tokenAddress;
+    ERC20 public token;
     address public owner;
     uint public startTime;
     //whitelist
@@ -28,6 +29,7 @@ contract ContributionReward {
     constructor(address _tokenAddress) {
         require(_tokenAddress != address(0), "invalid token address");
         owner = msg.sender;
+        token = Token(_tokenAddress);
         startTime = 0;
     }
     
@@ -102,7 +104,7 @@ contract ContributionReward {
             receipt = msg.sender;
         }
 
-        require(Token(tokenAddress).transfer(receipt, transferAmount));
+        require(token.transfer(receipt, transferAmount));
     }
     
     // get self status
