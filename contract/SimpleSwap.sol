@@ -49,7 +49,7 @@ contract ERC20SimpleSwap {
     "EIP712Domain(string name,string version,uint256 chainId)"
   );
   bytes32 public constant CHEQUE_TYPEHASH = keccak256(
-    "Cheque(address chequebook,address beneficiary,uint256 cumulativePayout)"
+    "Cheque(address chequebook,address beneficiary,uint256 cumulativePayout, address recipient)"
   );
   bytes32 public constant CASHOUT_TYPEHASH = keccak256(
     "Cashout(address chequebook,address sender,uint256 requestPayout,address recipient,uint256 callerPayout)"
@@ -154,7 +154,7 @@ contract ERC20SimpleSwap {
   ) internal {
     /* The issuer must have given explicit approval to the cumulativePayout, either by being the caller or by signature*/
     if (msg.sender != issuer) {
-      require(issuer == recoverEIP712(chequeHash(address(this), beneficiary, cumulativePayout), issuerSig),
+      require(issuer == recoverEIP712(chequeHash(address(this), beneficiary, cumulativePayout, recipient), issuerSig),
       "invalid issuer signature");
     }
     /* the requestPayout is the amount requested for payment processing */
@@ -303,13 +303,14 @@ contract ERC20SimpleSwap {
     require(token.transfer(recipient, amount), "transfer failed");
   }
 
-  function chequeHash(address chequebook, address beneficiary, uint cumulativePayout)
+  function chequeHash(address chequebook, address beneficiary, uint cumulativePayout, address recipient)
   internal pure returns (bytes32) {
     return keccak256(abi.encode(
       CHEQUE_TYPEHASH,
       chequebook,
       beneficiary,
-      cumulativePayout
+      cumulativePayout,
+      recipient
     ));
   }
 
