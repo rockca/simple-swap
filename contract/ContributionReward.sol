@@ -6,7 +6,7 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4
 interface Token {
     //ERC20 transfer()
     function transfer(address _to, uint256 _value) external returns (bool);
-    function balance()
+    function balanceOf(address account) public view virtual override returns (uint256);
 }
 
 contract ContributionReward {
@@ -23,14 +23,19 @@ contract ContributionReward {
     ERC20 public token;
     address public owner;
     uint public startTime;
+    uint public dayUnit;
+    uint public dayTotal;
     //whitelist
     mapping (address => reward) public whiteList;
     
-    constructor(address _tokenAddress) {
+    //unlock rate = dayUnit/dayTotal
+    constructor(address _tokenAddress, uint _dayUnit, uint _dayTotal) {
         require(_tokenAddress != address(0), "invalid token address");
         owner = msg.sender;
         token = Token(_tokenAddress);
         startTime = 0;
+        dayUnit = _dayUnit;
+        dayTotal = _dayTotal;
     }
     
     modifier onlyOwner() {
@@ -68,11 +73,12 @@ contract ContributionReward {
     
     function withdraw(address receipt) external {
         require(whiteList[msg.sender].totalRewards > whiteList[msg.sender].totalWithdrawn);
-        
+
+        uint rate = dayTotal.div(dayUnit);
         uint transferAmount = 0;
-        uint incAmount = whiteList[msg.sender].lastRewards.div(4);
+        uint incAmount = whiteList[msg.sender].lastRewards.div(rate);
         // if now doesn't arrive 7 days, can withdraw canBeWithdraw only
-        if (whiteList[msg.sender].canWithdrawAt + 7 days > block.timestamp) {
+        if (whiteList[msg.sender].canWithdrawAt + dayUnit days > block.timestamp) {
             // [0, 7 days), 1 * incAmount
             transferAmount = whiteList[msg.sender].legacyFromPreRound.add(incAmount);
             // add 7 days to canWithdrawAt
@@ -115,5 +121,9 @@ contract ContributionReward {
     // called by owner only
     function getStatus(address a) external view onlyOwner returns(reward memory) {
         return whiteList[a];
+    }
+    // called by owner only
+    function getBalance() external view onlyOwner returns(uint256) {
+        return token.balanceOf(address(this));
     }
 }
