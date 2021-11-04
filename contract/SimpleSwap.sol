@@ -16,7 +16,7 @@ Furthermore, solvency can be guaranteed via hardDeposits
 @dev as an issuer, no cheques should be send if the cumulative worth of a cheques send is above the cumulative worth of all deposits
 as a beneficiary, we should always take into account the possibility that a cheque bounces (when no hardDeposits are assigned)
 */
-contract ERC20SimpleSwap {
+contract SimpleSwap {
   using SafeMath for uint;
 
   event ChequeCashed(
@@ -123,12 +123,12 @@ contract ERC20SimpleSwap {
 
   /// @return the balance of the chequebook
   /// balance is parted to two parts: stake + issue cheques
-  function balance() public view returns(uint) {
+  function totakbalance() public view returns(uint) {
     return token.balanceOf(address(this));
   }
   /// @return the part of the balance that is not covered by totalStake
   function liquidBalance() public view returns(uint) {
-    return balance().sub(totalStake.amount);
+    return totakbalance().sub(totalStake.amount);
   }
 
   // set the new reciever:called by issuer
@@ -233,7 +233,7 @@ contract ERC20SimpleSwap {
   function increaseStake(uint amount) public {
     require(msg.sender == issuer, "increaseStake: not issuer");
     /* ensure totalStake don't exceed the global balance */
-    require(totalStake.amount.add(amount) <= balance(), "stake exceeds balance");
+    require(totalStake.amount.add(amount) <= totakbalance(), "stake exceeds balance");
     /* increase totalStake*/
     totalStake.amount = totalStake.amount.add(amount);
     refreshStakeTime();
