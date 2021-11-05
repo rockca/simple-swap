@@ -123,12 +123,12 @@ contract SimpleSwap {
 
   /// @return the balance of the chequebook
   /// balance is parted to two parts: stake + issue cheques
-  function totakbalance() public view returns(uint) {
+  function totalbalance() public view returns(uint) {
     return token.balanceOf(address(this));
   }
   /// @return the part of the balance that is not covered by totalStake
   function liquidBalance() public view returns(uint) {
-    return totakbalance().sub(totalStake.amount);
+    return totalbalance().sub(totalStake.amount);
   }
 
   // set the new reciever:called by issuer
@@ -233,7 +233,7 @@ contract SimpleSwap {
   function increaseStake(uint amount) public {
     require(msg.sender == issuer, "increaseStake: not issuer");
     /* ensure totalStake don't exceed the global balance */
-    require(totalStake.amount.add(amount) <= totakbalance(), "stake exceeds balance");
+    require(totalStake.amount.add(amount) <= totalbalance(), "stake exceeds balance");
     /* increase totalStake*/
     totalStake.amount = totalStake.amount.add(amount);
     refreshStakeTime();
