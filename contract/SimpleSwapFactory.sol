@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BSD-3-Clause
-pragma solidity =0.7.6;
+pragma solidity =0.8.0;
 pragma abicoder v2;
 import "./SimpleSwap.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 
 /**
 @title Factory contract for SimpleSwap
-@author The Swarm Authors
+@author The Btfs Authors
 @notice This contract deploys SimpleSwap contracts
 */
 contract SimpleSwapFactory {

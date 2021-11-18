@@ -1,9 +1,3 @@
-// Sources flattened with hardhat v2.3.0 https://hardhat.org
-
-// File @openzeppelin/contracts/utils/Context.sol@v4.1.0
-
-// : MIT
-
 pragma solidity ^0.8.0;
 
 /*
@@ -29,8 +23,6 @@ abstract contract Context {
 
 
 // File @openzeppelin/contracts/access/Ownable.sol@v4.1.0
-
-// : MIT
 
 pragma solidity ^0.8.0;
 
@@ -106,7 +98,7 @@ pragma solidity ^0.8.0;
 
 /**
  * @title PriceOracle contract
- * @author The Swarm Authors
+ * @author The Btfs Authors
  * @dev The price oracle contract keeps track of the current prices for settlement in swap accounting.
  */
 contract PriceOracle is Ownable {
@@ -114,46 +106,16 @@ contract PriceOracle is Ownable {
      * @dev Emitted when the price is updated.
      */
     event PriceUpdate(uint256 price);
-    /**
-     * @dev Emitted when the cheque value deduction amount is updated.
-     */
-    /*
-    delete for Deduction
-    */
-    //event ChequeValueDeductionUpdate(uint256 chequeValueDeduction);
 
-    // current price in PLUR per accounting unit
+    // current price in wei per Gbytes/month
     uint256 public price;
-    
-    /*
-    delete for Deduction
-    */
-    // value deducted from first received cheque from a peer in PLUR
-    //uint256 public chequeValueDeduction;
-    /*
-    delete for Deduction
-    */
-    /*
-    constructor(uint256 _price, uint256 _chequeValueDeduction) {
-        price = _price;
-        chequeValueDeduction = _chequeValueDeduction;
-    }
-    */
     constructor(uint256 _price) {
         price = _price;
     }
 
     /**
-     * @notice Returns the current price in PLUR per accounting unit and the current cheque value deduction amount.
+     * @notice Returns the current price
      */
-     /*
-    delete for Deduction
-    */
-    /*
-    function getPrice() external view returns (uint256, uint256) {
-        return (price, chequeValueDeduction);
-    }
-    */
     function getPrice() external view returns (uint256) {
         return price;
     }
@@ -166,22 +128,4 @@ contract PriceOracle is Ownable {
         price = newPrice;
         emit PriceUpdate(price);
     }
-    
-    
-     /*
-    delete for Deduction
-    */
-    /**
-     * @notice Update the cheque value deduction amount. Can only be called by the owner.
-     * @param newChequeValueDeduction the new cheque value deduction amount
-     */
-    /*
-    function updateChequeValueDeduction(uint256 newChequeValueDeduction)
-        external
-        onlyOwner
-    {
-        chequeValueDeduction = newChequeValueDeduction;
-        emit ChequeValueDeductionUpdate(chequeValueDeduction);
-    }
-    */
 }

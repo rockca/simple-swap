@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: BSD-3-Clause
-pragma solidity =0.7.6;
+pragma solidity =0.8.0;
 pragma abicoder v2;
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/math/SafeMath.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/math/Math.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/cryptography/ECDSA.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/token/ERC20/ERC20.sol";
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/presets/ERC20PresetMinterPauser.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/Math.sol";
+import "@openzeppelin/contracts/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/presets/ERC20PresetMinterPauser.sol";
 
 
 /**
 @title Chequebook contract without waivers
-@author The Swarm Authors
+@author The Btfs Authors
 @notice The chequebook contract allows the issuer of the chequebook to send cheques to an unlimited amount of counterparties.
 Furthermore, solvency can be guaranteed via hardDeposits
 @dev as an issuer, no cheques should be send if the cumulative worth of a cheques send is above the cumulative worth of all deposits
-as a beneficiary, we should always take into account the possibility that a cheque bounces (when no hardDeposits are assigned)
+as a beneficiary, we should always take into account the possibility that a cheque bounces
 */
 contract SimpleSwap {
   using SafeMath for uint;
@@ -49,11 +49,12 @@ contract SimpleSwap {
     "EIP712Domain(string name,string version,uint256 chainId)"
   );
   bytes32 public constant CHEQUE_TYPEHASH = keccak256(
-    "Cheque(address chequebook,address beneficiary,uint256 cumulativePayout, address recipient)"
+    "Cheque(address chequebook,address beneficiary,uint256 cumulativePayout)"
   );
   bytes32 public constant CASHOUT_TYPEHASH = keccak256(
     "Cashout(address chequebook,address sender,uint256 requestPayout,address recipient,uint256 callerPayout)"
   );
+
 
 
   // the EIP712 domain this contract uses
@@ -97,14 +98,8 @@ contract SimpleSwap {
   uint public totalPaidOut;
   /* issuer of the contract, set at construction */
   address public issuer;
-  /* receiver of cheques， set by issuer */
-  address public receiver;
   /* indicates wether a cheque bounced in the past */
   bool public bounced;
-  /* the time to withdraw*/
-  uint public withdrawTime;
-  /* total amount staked*/
-  stake public totalStake;
 
   /**
   @param _issuer the issuer of cheques from this chequebook (needed as an argument for "Setting up a chequebook as a payment").
@@ -116,9 +111,6 @@ contract SimpleSwap {
     require(issuer == address(0), "already initialized");
     issuer = _issuer;
     token = ERC20(_token);
-    withdrawTime = 0;
-    // init
-    receiver = address(this);
   }
 
   /// @return the balance of the chequebook
@@ -126,17 +118,7 @@ contract SimpleSwap {
   function totalbalance() public view returns(uint) {
     return token.balanceOf(address(this));
   }
-  /// @return the part of the balance that is not covered by totalStake
-  function liquidBalance() public view returns(uint) {
-    return totalbalance().sub(totalStake.amount);
-  }
 
-  // set the new reciever:called by issuer
-  function setReciever(address newReciver) public {
-    require(msg.sender == issuer, "setReciever: not issuer");
-    require(newReciver != address(0) && newReciver != receiver, "invalid address");
-    receiver = newReciver;
-  }
   /**
   @dev internal function responsible for checking the issuerSignature, updating hardDeposit balances and doing transfers.
   Called by cashCheque and cashChequeBeneficary
@@ -154,7 +136,7 @@ contract SimpleSwap {
   ) internal {
     /* The issuer must have given explicit approval to the cumulativePayout, either by being the caller or by signature*/
     if (msg.sender != issuer) {
-      require(issuer == recoverEIP712(chequeHash(address(this), beneficiary, cumulativePayout, recipient), issuerSig),
+      require(issuer == recoverEIP712(chequeHash(address(this), beneficiary, cumulativePayout), issuerSig),
       "invalid issuer signature");
     }
     /* the requestPayout is the amount requested for payment processing */
@@ -226,91 +208,21 @@ contract SimpleSwap {
     _cashChequeInternal(msg.sender, recipient, cumulativePayout, 0, issuerSig);
   }
 
-  /**
-  @notice increase the stake
-  @param amount increased stake amount
-  */
-  function increaseStake(uint amount) public {
-    require(msg.sender == issuer, "increaseStake: not issuer");
-    /* ensure totalStake don't exceed the global balance */
-    require(totalStake.amount.add(amount) <= totalbalance(), "stake exceeds balance");
-    /* increase totalStake*/
-    totalStake.amount = totalStake.amount.add(amount);
-    refreshStakeTime();
-
-    emit IncreaseStake(amount);
-  }
-  
-  function refreshStakeTime() private {
-      totalStake.canBeDecreasedAt = block.timestamp + 180 days;
-  }
-
-  /**
-  @notice decrease the stake 
-  @param amount decreased stake amount
-  */
-  function decreaseStake(uint amount, address recipient) public {
-    require(msg.sender == issuer, "decreaseStake: not issuer");
-    /* must reach lock-up time*/
-    require(block.timestamp >= totalStake.canBeDecreasedAt && totalStake.canBeDecreasedAt != 0, "lock-up time (180 days) not yet been reached");
-    /* must be a right value*/
-    require(amount <= totalStake.amount && amount > 0, "invalid amount");
-
-    /* reset the canBeDecreasedAt */
-    refreshStakeTime();
-    
-    /* update totalStake.amount */
-    totalStake.amount = totalStake.amount.sub(amount);
-
-    // transfer amount to recipient
-    if (recipient != address(0)) {
-      require(token.transfer(recipient, amount), "transfer failed");
-    }
-    
-    emit DecreaseStake(amount, recipient);
-  }
-  
-  /* get total stake amount */
-  function getTotalStake() public view returns(uint) {
-    return totalStake.amount;
-  }
-
-  /* get lock-up time */
-  function getTimeCanBeDecreased() public view returns(uint) {
-    return totalStake.canBeDecreasedAt;
-  }
-
-  /* wait 2 hours to withdraw*/
-  function preWithdraw() public {
-      require(msg.sender == issuer, "not issuer");
-      if (withdrawTime == 0) {
-          withdrawTime = block.timestamp + 2 hours;
-          emit PreWithdraw();
-      }
-  }
-
-  /// @param amount amount to withdraw
-  // solhint-disable-next-line no-simple-event-func-name
-  function withdraw(uint amount, address recipient) public {
+  function withdraw(uint amount) public {
     /* only issuer can do this */
-    require(msg.sender == issuer, "withdraw:not issuer");
+    require(msg.sender == issuer, "not issuer");
     /* ensure we don't take anything from the hard deposit */
-    require(amount <= liquidBalance(), "liquidBalance not sufficient");
-    /* recipient must not nil */
-    require(recipient != address(0), "nil recipient");
-    /* ensure withdrawTime is ok for withdraw*/
-    require(withdrawTime > 0 && block.timestamp >= withdrawTime , "wait more time");
-    require(token.transfer(recipient, amount), "transfer failed");
+    require(amount <= totalbalance(), "totalbalance not sufficient");
+    require(token.transfer(issuer, amount), "transfer failed");
   }
 
-  function chequeHash(address chequebook, address beneficiary, uint cumulativePayout, address recipient)
+  function chequeHash(address chequebook, address beneficiary, uint cumulativePayout)
   internal pure returns (bytes32) {
     return keccak256(abi.encode(
       CHEQUE_TYPEHASH,
       chequebook,
       beneficiary,
-      cumulativePayout,
-      recipient
+      cumulativePayout
     ));
   }
 
