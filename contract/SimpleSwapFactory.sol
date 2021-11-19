@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 contract SimpleSwapFactory {
 
   /* event fired on every new SimpleSwap deployment */
-  event SimpleSwapDeployed(address contractAddress);
+  event SimpleSwapDeployed(address issuer,address contractAddress);
 
   /* mapping to keep track of which contracts were deployed by this factory */
   mapping (address => bool) public deployedContracts;
@@ -39,7 +39,7 @@ contract SimpleSwapFactory {
     address contractAddress = Clones.cloneDeterministic(master, keccak256(abi.encode(msg.sender, salt)));
     SimpleSwap(contractAddress).init(issuer, TokenAddress);
     deployedContracts[contractAddress] = true;
-    emit SimpleSwapDeployed(contractAddress);
+    emit SimpleSwapDeployed(issuer,contractAddress);
     return contractAddress;
   }
 }
