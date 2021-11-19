@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
-pragma solidity =0.8.0;
+pragma solidity =0.7.6;
 pragma abicoder v2;
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/presets/ERC20PresetMinterPauser.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/math/SafeMath.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/math/Math.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/cryptography/ECDSA.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/token/ERC20/ERC20.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/presets/ERC20PresetMinterPauser.sol";
 
 
 /**
@@ -141,7 +141,7 @@ contract SimpleSwap {
     /* the requestPayout is the amount requested for payment processing */
     uint requestPayout = cumulativePayout.sub(paidOut[beneficiary]);
     /* calculates acutal payout */
-    uint totalPayout = Math.min(requestPayout, liquidBalance());
+    uint totalPayout = Math.min(requestPayout, totalbalance());
     require(totalPayout >= callerPayout, "SimpleSwap: cannot pay caller");
     /* increase the stored paidOut amount to avoid double payout */
     paidOut[beneficiary] = paidOut[beneficiary].add(totalPayout);
