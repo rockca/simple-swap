@@ -29,7 +29,6 @@ contract SimpleSwap {
   );
   event ChequeBounced();
   event Withdraw(uint amount);
-  event PreWithdraw();
   event IncreaseStake(uint amount);
   event DecreaseStake(uint amount, address recipient);
 
