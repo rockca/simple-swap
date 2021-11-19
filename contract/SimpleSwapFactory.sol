@@ -12,7 +12,7 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4
 contract SimpleSwapFactory {
 
   /* event fired on every new SimpleSwap deployment */
-  event SimpleSwapDeployed(address indexed issuer,address indexed contractAddress);
+  event SimpleSwapDeployed(address issuer,address contractAddress);
 
   /* mapping to keep track of which contracts were deployed by this factory */
   mapping (address => bool) public deployedContracts;
